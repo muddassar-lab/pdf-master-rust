@@ -2,49 +2,79 @@ import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import { Button, TextField, Container, Typography, Box, Grid, Paper } from "@mui/material";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [pdfFiles, setPdfFiles] = useState<File[]>([]);
+  const [password, setPassword] = useState("");
+  const [outputFileName, setOutputFileName] = useState("");
 
   async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
   }
 
+  const handleEncrypt = async () => {
+    const fileNames = pdfFiles.map((file) => file.name);
+    await invoke("encrypt_pdfs", { inputFiles: fileNames, password });
+  };
+
+  const handleDecrypt = async () => {
+    const fileNames = pdfFiles.map((file) => file.name);
+    await invoke("decrypt_pdfs", { inputFiles: fileNames, password });
+  };
+
+  const handleMerge = async () => {
+    const fileNames = pdfFiles.map((file) => file.name);
+    await invoke("merge_pdfs", { inputFiles: fileNames, outputFile: outputFileName });
+  };
+
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
+    <Container>
+      <Typography variant="h4" gutterBottom>
+        PDF Master Rust
+      </Typography>
+      <Box>
         <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+          type="file"
+          multiple
+          onChange={(e) => setPdfFiles(Array.from(e.target.files || []))}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+        <TextField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Output File Name"
+          value={outputFileName}
+          onChange={(e) => setOutputFileName(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        <Grid container spacing={2}>
+          <Grid item>
+            <Button variant="contained" color="primary" onClick={handleEncrypt}>
+              Encrypt PDFs
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button variant="contained" color="secondary" onClick={handleDecrypt}>
+              Decrypt PDFs
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button variant="contained" color="default" onClick={handleMerge}>
+              Merge PDFs
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    </Container>
   );
 }
 
